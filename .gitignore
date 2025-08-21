@@ -5,3 +5,4 @@ temp/
 *.pdf
 *.hash
 *.npz
+sweep_results/

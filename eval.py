@@ -208,7 +208,7 @@ def calculate_final_score(aggregates):
         return 0
 
 
-def main(folder: str, noisy_folder: str, roi_folder: str, reference_folder: str):
+def evaluate(folder: str, noisy_folder: str, roi_folder: str, reference_folder: str):
     """Evaluate the dehazing algorithm.
 
     Args:
@@ -294,6 +294,25 @@ def main(folder: str, noisy_folder: str, roi_folder: str, reference_folder: str)
     fid_score = calculate_fid_score(fid_image_paths, str(reference_folder))
     print(f"FID between {folder} and {reference_folder}: {fid_score:.3f}")
 
+    # Create aggregates dictionary for final score calculation
+    aggregates = {
+        "fid": float(fid_score),
+        "cnr_mean": float(np.mean(metrics["CNR"])),
+        "cnr_std": float(np.std(metrics["CNR"])),
+        "gcnr_mean": float(np.mean(metrics["gCNR"])),
+        "gcnr_std": float(np.std(metrics["gCNR"])),
+        "ks_roi1_ksstatistic_mean": float(np.mean(metrics["KS_A"])),
+        "ks_roi1_ksstatistic_std": float(np.std(metrics["KS_A"])),
+        "ks_roi2_ksstatistic_mean": float(np.mean(metrics["KS_B"])),
+        "ks_roi2_ksstatistic_std": float(np.std(metrics["KS_B"])),
+    }
+
+    # Calculate final score
+    final_score = calculate_final_score(aggregates)
+    aggregates["final_score"] = float(final_score)
+
+    return aggregates
+
 
 if __name__ == "__main__":
-    tyro.cli(main)
+    tyro.cli(evaluate)
