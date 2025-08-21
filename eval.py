@@ -2,16 +2,17 @@ import warnings
 from glob import glob
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import tyro
 from PIL import Image
 from scipy.ndimage import binary_erosion, distance_transform_edt
 from scipy.stats import ks_2samp
+from zea import log
 from zea.io_lib import load_image
 
 import fid_score
+from plots import plot_metrics
 
 
 def calculate_fid_score(denoised_image_dirs, ground_truth_dir):
@@ -207,64 +208,38 @@ def calculate_final_score(aggregates):
         return 0
 
 
-def plot_metrics(metrics, limits, out_path):
-    plt.style.use("seaborn-v0_8-darkgrid")
-    fig, axes = plt.subplots(1, len(metrics), figsize=(7.2, 2.7), dpi=600)
-    colors = ["#0057b7", "#ffb300", "#008744", "#d62d20"]
-    # Arrow direction: ↑ for up, ↓ for down
-    metric_labels = {
-        "CNR": r"CNR $\uparrow$",
-        "gCNR": r"gCNR $\uparrow$",
-        "KS_A": r"KS$_{septum}$ $\downarrow$",
-        "KS_B": r"KS$_{ventricle}$ $\uparrow$",
-    }
-    for idx, (ax, (name, values)) in enumerate(zip(axes, metrics.items())):
-        ax.hist(
-            values,
-            bins=30,
-            color=colors[idx % len(colors)],
-            alpha=0.85,
-            edgecolor="black",
-            linewidth=0.7,
-        )
-        ax.set_xlabel(metric_labels.get(name, name), fontsize=11)
-        ax.set_ylabel("Count", fontsize=10)
-        # Draw limits
-        if name in limits:
-            for lim in limits[name]:
-                ax.axvline(lim, color="crimson", linestyle="--", lw=1.2)
-        ax.spines["top"].set_visible(False)
-        ax.spines["right"].set_visible(False)
-        ax.tick_params(axis="both", which="major", labelsize=9)
-    fig.tight_layout(pad=1.5)
-    fig.savefig(out_path, bbox_inches="tight", dpi=600)
-    plt.close(fig)
+def main(folder: str, noisy_folder: str, roi_folder: str, reference_folder: str):
+    """Evaluate the dehazing algorithm.
 
-
-def main(folder: str, roi_folder: str, reference_folder: str):
+    Args:
+        folder (str): Path to the folder containing the dehazed images.
+            Used for evaluating all metrics.
+        noisy_folder (str): Path to the folder containing the noisy images.
+            Only used for KS statistics.
+        roi_folder (str): Path to the folder containing the ROI images.
+            Used for contrast and KS statistic metrics.
+        reference_folder (str): Path to the folder containing the reference images.
+            Used only for FID calculation.
+    """
     folder = Path(folder)
+    noisy_folder = Path(noisy_folder)
     roi_folder = Path(roi_folder)
     reference_folder = Path(reference_folder)
 
     folder_files = set(f.name for f in folder.glob("*.png"))
+    noisy_files = set(f.name for f in noisy_folder.glob("*.png"))
     roi_files = set(f.name for f in roi_folder.glob("*.png"))
-    ref_files = set(f.name for f in reference_folder.glob("*.png"))
 
     print(f"Found {len(folder_files)} .png files in output folder: {folder}")
+    print(f"Found {len(noisy_files)} .png files in noisy folder: {noisy_folder}")
     print(f"Found {len(roi_files)} .png files in ROI folder: {roi_folder}")
-    print(f"Found {len(ref_files)} .png files in reference folder: {reference_folder}")
 
     # Find intersection of filenames
-    common_files = sorted(folder_files & roi_files & ref_files)
-    print(f"Found {len(common_files)} images present in all folders.")
-    if len(common_files) == 0:
-        print("No matching images found in all folders. Check your folder contents.")
-        print(f"Output folder files: {sorted(folder_files)}")
-        print(f"ROI folder files: {sorted(roi_files)}")
-        print(f"Reference folder files: {sorted(ref_files)}")
-        assert len(common_files) > 0, (
-            "No matching .png files in all folders. Cannot proceed."
-        )
+    common_files = sorted(folder_files & roi_files & noisy_files)
+    print(f"Found {len(common_files)} matching images in noisy/dehazed/roi folders")
+    assert len(common_files) > 0, (
+        "No matching .png files in all folders. Cannot proceed."
+    )
 
     metrics = {"CNR": [], "gCNR": [], "KS_A": [], "KS_B": []}
     limits = {
@@ -275,28 +250,26 @@ def main(folder: str, roi_folder: str, reference_folder: str):
     }
 
     for name in common_files:
-        our_path = folder / name
+        dehazed_path = folder / name
+        noisy_path = noisy_folder / name
         roi_path = roi_folder / name
-        ref_path = reference_folder / name
-
-        assert our_path.exists(), f"Missing file in output folder: {our_path}"
-        assert roi_path.exists(), f"Missing file in ROI folder: {roi_path}"
-        assert ref_path.exists(), f"Missing file in reference folder: {ref_path}"
 
         try:
-            img = np.array(load_image(str(our_path)))
-            img_ref = np.array(load_image(str(ref_path)))
+            img_dehazed = np.array(load_image(str(dehazed_path)))
+            img_noisy = np.array(load_image(str(noisy_path)))
         except Exception as e:
             print(f"Error loading image {name}: {e}")
             continue
 
         # CNR/gCNR
-        cnr_gcnr = calculate_cnr_gcnr(img, str(roi_path))
+        cnr_gcnr = calculate_cnr_gcnr(img_dehazed, str(roi_path))
         metrics["CNR"].append(cnr_gcnr[0][0])
         metrics["gCNR"].append(cnr_gcnr[0][1])
 
         # KS statistics
-        ks_a, _, ks_b, _ = calculate_ks_statistics(img_ref, img, str(roi_path))
+        ks_a, _, ks_b, _ = calculate_ks_statistics(
+            img_noisy, img_dehazed, str(roi_path)
+        )
         metrics["KS_A"].append(ks_a)
         metrics["KS_B"].append(ks_b)
 
@@ -308,8 +281,13 @@ def main(folder: str, roi_folder: str, reference_folder: str):
     for k, (mean, std, minv, maxv) in stats.items():
         print(f"{k}: mean={mean:.3f}, std={std:.3f}, min={minv:.3f}, max={maxv:.3f}")
 
-    plot_metrics(metrics, limits, str(folder / "contrast_metrics.png"))
-    print(f"Saved metrics plot to {folder / 'contrast_metrics.png'}")
+    fig = plot_metrics(metrics, limits, "contrast_metrics.png")
+
+    path = Path("contrast_metrics.png")
+    save_kwargs = {"bbox_inches": "tight", "dpi": 300}
+    fig.savefig(path, **save_kwargs)
+    fig.savefig(path.with_suffix(".pdf"), **save_kwargs)
+    log.success(f"Metrics plot saved to {log.yellow(path)}")
 
     # Compute FID
     fid_image_paths = [str(folder / name) for name in common_files]

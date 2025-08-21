@@ -7,7 +7,7 @@
 		<a href="https://keras.io/"><img src="https://img.shields.io/badge/Keras-EE4C2C?logo=keras&logoColor=white" alt="Keras"></a>
 	</p>
 		<h3>
-			<span style="display:inline-block; margin: 0 20px;">
+			<span style="display:inline-block; margin: 0 40px;">
 				<a href="https://example.com/tristan-stevens">Tristan Stevens</a>
 			</span>
 			<span style="display:inline-block; margin: 0 20px;">

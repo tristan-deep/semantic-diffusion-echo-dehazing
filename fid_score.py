@@ -88,6 +88,7 @@ parser.add_argument(
 )
 
 IMAGE_EXTENSIONS = {"bmp", "jpg", "jpeg", "pgm", "png", "ppm", "tif", "tiff", "webp"}
+TEMP_DIR = pathlib.Path("temp")
 
 
 class ImagePathDataset(torch.utils.data.Dataset):
@@ -277,7 +278,7 @@ def compute_statistics_of_path(path, model, batch_size, dims, device, num_worker
 
 
 def _fid_cache_paths():
-    tmp_dir = pathlib.Path("tmp")
+    tmp_dir = TEMP_DIR
     tmp_dir.mkdir(exist_ok=True)
     stats_path = tmp_dir / "fid_stats.npz"
     hash_path = tmp_dir / "fid_stats.hash"
@@ -391,7 +392,7 @@ def calculate_fid_with_cached_ground_truth(
                 continue
         return hash_md5.hexdigest()
 
-    tmp_dir = pathlib.Path("tmp")
+    tmp_dir = TEMP_DIR
     tmp_dir.mkdir(exist_ok=True)
     stats_path = tmp_dir / "fid_stats.npz"
     hash_path = tmp_dir / "fid_stats.hash"

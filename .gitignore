@@ -3,3 +3,5 @@
 temp/
 *.png
 *.pdf
+*.hash
+*.npz
