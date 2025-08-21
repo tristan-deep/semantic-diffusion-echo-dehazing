@@ -43,16 +43,13 @@ import torchvision.transforms as TF
 from PIL import Image
 from scipy import linalg
 from torch.nn.functional import adaptive_avg_pool2d
+from tqdm import tqdm
 
 try:
-    from tqdm import tqdm
+    from pytorch_fid.inception import InceptionV3
 except ImportError:
-    # If tqdm is not available, provide a mock version of it
-    def tqdm(x):
-        return x
+    raise ImportError("Please install pytorch-fid: pip install pytorch-fid")
 
-
-from pytorch_fid.inception import InceptionV3
 
 parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
 parser.add_argument("--batch-size", type=int, default=50, help="Batch size to use")

@@ -1,0 +1,44 @@
+
+<div align="center">
+	<h1>Semantic Diffusion Posterior Sampling for Cardiac Ultrasound Dehazing</h1>
+	<p>
+		<a href="https://arxiv.org/abs/0000.0000"><img src="https://img.shields.io/badge/arXiv-0000.0000-b31b1b.svg?logo=arXiv" alt="arXiv"></a>
+		<a href="https://huggingface.co/collections/tristan-deep/semantic-diffusion-posterior-sampling-for-cardiac-ultrasound-68a70559a7f719c7e6bd5788"><img src="https://img.shields.io/badge/🤗%20Hugging%20Face-Model-orange" alt="Hugging Face Model"></a>
+		<a href="https://keras.io/"><img src="https://img.shields.io/badge/Keras-EE4C2C?logo=keras&logoColor=white" alt="Keras"></a>
+	</p>
+		<h3>
+			<span style="display:inline-block; margin: 0 20px;">
+				<a href="https://example.com/tristan-stevens">Tristan Stevens</a>
+			</span>
+			<span style="display:inline-block; margin: 0 20px;">
+				<a href="https://example.com/oisin-nolan">Oisín Nolan</a>
+			</span>
+			<span style="display:inline-block; margin: 0 20px;">
+				<a href="https://example.com/ruud-van-sloun">Ruud van Sloun</a>
+			</span>
+		</h3>
+	<p>Eindhoven University of Technology, the Netherlands</p>
+</div>
+
+
+### Installation
+
+The algorithm is implemented using Keras with JAX backend. Furthermore it heavily relies on the [zea ultrasound library](https://github.com/tue-bmd/zea).
+
+Either install the following in your Python environment, or use the [Dockerfile](./Dockerfile) provided in this repository.
+
+```bash
+pip install tyro optuna zea==0.0.4
+pip install -U "jax[cuda12]"
+```
+
+> [!NOTE]
+> Although the code was primarily tested with JAX as the Keras backend, TensorFlow and PyTorch should also work.
+
+### Running the algorithm
+
+Some example images are downloaded in the [./assets](./assets) folder. The models are automatically downloaded from the [Hugging Face Model Hub](https://huggingface.co/collections/tristan-deep/semantic-diffusion-posterior-sampling-for-cardiac-ultrasound-68a70559a7f719c7e6bd5788).
+
+```bash
+python main.py --input-folder ./assets --output-folder ./temp
+```
