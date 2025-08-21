@@ -6,15 +6,9 @@
 		<a href="https://keras.io/"><img src="https://img.shields.io/badge/Keras-EE4C2C?logo=keras&logoColor=white" alt="Keras"></a>
 	</p>
 		<h3>
-			<span style="display:inline-block; margin: 0 30px;">
-				<a href="https://tristan-deep.github.io/">Tristan Stevens</a>
-			</span>
-			<span style="display:inline-block; margin: 0 30px;">
-				<a href="https://oisinnolan.github.io/">Oisín Nolan</a>
-			</span>
-			<span style="display:inline-block; margin: 0 30px;">
-				<a href="https://www.tue.nl/en/research/researchers/ruud-van-sloun">Ruud van Sloun</a>
-			</span>
+			<a href="https://tristan-deep.github.io/">Tristan Stevens</a> &nbsp;|&nbsp;
+			<a href="https://oisinnolan.github.io/">Oisín Nolan</a> &nbsp;|&nbsp;
+			<a href="https://www.tue.nl/en/research/researchers/ruud-van-sloun">Ruud van Sloun</a>
 		</h3>
 	<p>Eindhoven University of Technology, the Netherlands</p>
 </div>
