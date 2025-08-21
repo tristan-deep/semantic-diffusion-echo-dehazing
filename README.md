@@ -1,4 +1,3 @@
-
 <div align="center">
 	<h1>Semantic Diffusion Posterior Sampling for Cardiac Ultrasound Dehazing</h1>
 	<p>
@@ -7,14 +6,14 @@
 		<a href="https://keras.io/"><img src="https://img.shields.io/badge/Keras-EE4C2C?logo=keras&logoColor=white" alt="Keras"></a>
 	</p>
 		<h3>
-			<span style="display:inline-block; margin: 0 40px;">
-				<a href="https://example.com/tristan-stevens">Tristan Stevens</a>
+			<span style="display:inline-block; margin: 0 30px;">
+				<a href="https://tristan-deep.github.io/">Tristan Stevens</a>
 			</span>
-			<span style="display:inline-block; margin: 0 20px;">
-				<a href="https://example.com/oisin-nolan">Oisín Nolan</a>
+			<span style="display:inline-block; margin: 0 30px;">
+				<a href="https://oisinnolan.github.io/">Oisín Nolan</a>
 			</span>
-			<span style="display:inline-block; margin: 0 20px;">
-				<a href="https://example.com/ruud-van-sloun">Ruud van Sloun</a>
+			<span style="display:inline-block; margin: 0 30px;">
+				<a href="https://www.tue.nl/en/research/researchers/ruud-van-sloun">Ruud van Sloun</a>
 			</span>
 		</h3>
 	<p>Eindhoven University of Technology, the Netherlands</p>
