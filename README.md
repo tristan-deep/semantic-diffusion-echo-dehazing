@@ -14,7 +14,7 @@
 </div>
 
 <p align="center">
-	<img src="animation.gif" alt="Cardiac Ultrasound Dehazing Animation" style="max-width: 100%; height: auto;">
+	<img src="./paper/animation.gif" alt="Cardiac Ultrasound Dehazing Animation" style="max-width: 100%; height: auto;">
 </p>
 
 ### Installation
