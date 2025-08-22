@@ -1,4 +1,5 @@
 import json
+from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -9,9 +10,9 @@ import tyro
 from keras import ops
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path as pltPath
+from PIL import Image
 from skimage import measure
 from zea import log
-from zea.io_lib import matplotlib_figure_to_numpy
 from zea.utils import save_to_gif
 from zea.visualize import plot_image_grid
 
@@ -44,6 +45,25 @@ def add_shape_from_mask(ax, mask, **kwargs):
         patch = PathPatch(path, **kwargs)
         patches.append(ax.add_patch(patch))
     return patches
+
+
+def matplotlib_figure_to_numpy(fig):
+    """Convert matplotlib figure to numpy array.
+
+    Args:
+        fig (matplotlib.figure.Figure): figure to convert.
+
+    Returns:
+        np.ndarray: numpy array of figure.
+
+    """
+    buf = BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight")
+    buf.seek(0)
+    image = Image.open(buf).convert("RGB")
+    image = np.array(image)[..., :3]
+    buf.close()
+    return image
 
 
 def plot_batch_with_named_masks(
@@ -359,7 +379,7 @@ def create_animation_frame(hazy_images, tissue_frame, haze_frame):
         vmin=0,
         vmax=255,
     )
-    labels = ["Hazy", "Tissue"] if haze_frame is None else ["Hazy", "Tissue", "Haze"]
+    labels = ["Hazy", "Haze", "Tissue"]
     for i, ax in enumerate(fig_frame.axes):
         label = labels[i % len(labels)]
         ax.set_ylabel(label, fontsize=12)
