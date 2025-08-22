@@ -1,3 +1,23 @@
+---
+title: "Semantic Diffusion Posterior Sampling for Cardiac Ultrasound Dehazing"
+emoji: "🫀"
+colorFrom: "red"
+colorTo: "purple"
+sdk: "gradio"
+sdk_version: "4.16.0"
+app_file: app.py
+pinned: false
+tags:
+  - diffusion
+  - ultrasound
+  - dehazing
+  - keras
+  - jax
+  - medical-imaging
+  - huggingface
+author: Tristan Stevens, Oisín Nolan, Ruud van Sloun
+---
+
 <div align="center">
 	<h1>Semantic Diffusion Posterior Sampling for Cardiac Ultrasound Dehazing</h1>
 	<p>
