@@ -1,8 +1,5 @@
 import copy
-import os
 from pathlib import Path
-
-os.environ["KERAS_BACKEND"] = "jax"
 
 import jax
 import keras
@@ -277,7 +274,6 @@ def run(
     skeleton_params: dict,
     batch_size: int = 4,
     diffusion_steps: int = 100,
-    initial_diffusion_step: int = 0,
     threshold_output_quantile: float = None,
     preserve_bottom_percent: float = 30.0,
     bottom_transition_width: float = 10.0,
@@ -306,7 +302,6 @@ def run(
             batch,
             n_samples=1,
             n_steps=diffusion_steps,
-            initial_step=initial_diffusion_step,
             seed=seed,
             verbose=True,
             per_pixel_omega=masks["per_pixel_omega"],
