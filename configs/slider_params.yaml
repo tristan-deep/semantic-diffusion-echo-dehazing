@@ -1,0 +1,29 @@
+diffusion_steps:
+  default: 300
+  min: 20
+  max: 500
+  step: 1
+
+omega:
+  default: 1.0
+  min: 0.5
+  max: 3.0
+  step: 0.01
+
+omega_vent:
+  default: 0.1
+  min: 0.0
+  max: 1.0
+  step: 0.01
+
+omega_sept:
+  default: 2.0
+  min: 1.0
+  max: 5.0
+  step: 0.01
+
+eta:
+  default: 0.00780
+  min: 0.0
+  max: 0.01
+  step: 0.00001

@@ -1,0 +1,6 @@
+zea==0.0.4
+jax[cuda12]
+tyro
+optuna
+gradio
+spaces

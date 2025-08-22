@@ -7,3 +7,4 @@ temp/
 *.hash
 *.npz
 sweep_results/
+.gradio
