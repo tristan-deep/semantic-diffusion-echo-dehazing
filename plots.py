@@ -1,5 +1,10 @@
+import json
+from pathlib import Path
+from typing import Any, Dict, List
+
 import matplotlib.pyplot as plt
 import numpy as np
+import tyro
 from keras import ops
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path as pltPath
@@ -252,3 +257,99 @@ def plot_metrics(metrics, limits, out_path):
         bbox_to_anchor=(0.5, 1.02),
     )
     return fig
+
+
+def plot_optimization_history_from_json(
+    trials_data: List[Dict[str, Any]], output_path: Path, method: str
+):
+    """Plot optimization history directly from JSON data."""
+
+    # Extract completed trials with values
+    completed_trials = [
+        t for t in trials_data if t["state"] == "COMPLETE" and t["value"] is not None
+    ]
+
+    if not completed_trials:
+        print("No completed trials found!")
+        return
+
+    # Sort by trial number
+    completed_trials.sort(key=lambda x: x["number"])
+
+    trial_numbers = [t["number"] for t in completed_trials]
+    values = [t["value"] for t in completed_trials]
+
+    # Apply seaborn styling
+    plt.style.use("seaborn-v0_8-darkgrid")
+
+    # Create the plot
+    fig, ax = plt.subplots(figsize=(5, 3), dpi=600)
+
+    # Plot all trial values with styling similar to plots.py
+    ax.scatter(
+        trial_numbers,
+        values,
+        c="#0057b7",
+        alpha=0.6,
+        s=30,
+        edgecolor="black",
+        linewidth=0.5,
+    )
+
+    # Plot best value so far
+    best_values = []
+    current_best = values[0]
+    for val in values:
+        if val > current_best:  # Assuming maximization
+            current_best = val
+        best_values.append(current_best)
+
+    ax.plot(
+        trial_numbers,
+        best_values,
+        color="#d62d20",
+        linewidth=2.5,
+        label="Best Value",
+        marker="o",
+        markersize=4,
+        markevery=max(1, len(trial_numbers) // 20),
+    )
+
+    ax.set_xlabel("Trial", fontsize=11)
+    ax.set_ylabel("Objective Value", fontsize=11)
+    # ax.set_title("Optimization History", fontsize=12)
+    ax.legend(fontsize=10, frameon=False)
+
+    # Remove top and right spines like in plots.py
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.tick_params(axis="both", which="major", labelsize=9)
+
+    # Save plot
+    fig.savefig(
+        output_path / f"optimization_history_{method}.png", dpi=600, bbox_inches="tight"
+    )
+    plt.close(fig)
+
+
+def main(json_file: str, output_dir: str = "plots", method: str = "semantic_dps"):
+    json_path = Path(json_file)
+    if not json_path.exists():
+        raise FileNotFoundError(f"JSON file not found: {json_file}")
+
+    # Load trial data
+    with open(json_path, "r") as f:
+        trials_data = json.load(f)
+
+    print(f"Loaded {len(trials_data)} trials from {json_file}")
+
+    # Create output directory
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    print("Generating optimization history plot...")
+    plot_optimization_history_from_json(trials_data, output_path, method)
+
+
+if __name__ == "__main__":
+    tyro.cli(main)
