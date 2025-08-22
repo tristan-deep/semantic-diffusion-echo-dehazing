@@ -136,7 +136,6 @@ class OptunaObjective:
                 "omega": trial.suggest_float("omega", 0.5, 50.0, log=True),
                 "omega_vent": trial.suggest_float("omega_vent", 0.0001, 50.0, log=True),
                 "omega_sept": trial.suggest_float("omega_sept", 0.1, 50.0, log=True),
-                "omega_dark": trial.suggest_float("omega_dark", 0.001, 50.0, log=True),
                 "eta": trial.suggest_float("eta", 0.001, 1.0, log=True),
                 "smooth_l1_beta": trial.suggest_float(
                     "smooth_l1_beta", 0.1, 10.0, log=True

@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
+import keras
 import matplotlib.pyplot as plt
 import numpy as np
 import tyro
@@ -9,7 +10,12 @@ from keras import ops
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path as pltPath
 from skimage import measure
+from zea import log
+from zea.io_lib import matplotlib_figure_to_numpy
+from zea.utils import save_to_gif
 from zea.visualize import plot_image_grid
+
+from utils import postprocess
 
 
 def add_shape_from_mask(ax, mask, **kwargs):
@@ -333,6 +339,62 @@ def plot_optimization_history_from_json(
         output_path / f"optimization_history_{method}.pdf", dpi=600, bbox_inches="tight"
     )
     plt.close(fig)
+
+
+def create_animation_frame(hazy_images, tissue_frame, haze_frame):
+    """Create a single animation frame from the tracked progress."""
+    batch, height, width = ops.shape(hazy_images)
+    frame_stack = ops.stack(
+        [
+            hazy_images,
+            tissue_frame,
+            haze_frame,
+        ]
+    )
+    frame_stack = ops.reshape(frame_stack, (-1, height, width))
+    fig_frame, _ = plot_image_grid(
+        frame_stack,
+        ncols=len(hazy_images),
+        remove_axis=False,
+        vmin=0,
+        vmax=255,
+    )
+    labels = ["Hazy", "Tissue"] if haze_frame is None else ["Hazy", "Tissue", "Haze"]
+    for i, ax in enumerate(fig_frame.axes):
+        label = labels[i % len(labels)]
+        ax.set_ylabel(label, fontsize=12)
+    frame_array = matplotlib_figure_to_numpy(fig_frame)
+    plt.close(fig_frame)
+    return frame_array
+
+
+def create_animation(hazy_images, diffusion_model, output_path, fps):
+    """Create animation from tracked progress frames."""
+    if not (len(diffusion_model.track_progress) > 1):
+        log.warning(
+            "Animation requested but no intermediate frames were tracked. "
+            "Try reducing diffusion_steps or ensure progress tracking is enabled."
+        )
+        return
+
+    log.info(f"Creating animation with {len(diffusion_model.track_progress)} frames...")
+
+    animation_frames = []
+    progbar = keras.utils.Progbar(
+        len(diffusion_model.track_progress), unit_name="frame"
+    )
+    for tissue_frame in diffusion_model.track_progress:
+        haze_frame = hazy_images - tissue_frame - 1
+        tissue_frame = postprocess(tissue_frame, diffusion_model.input_range)
+        haze_frame = postprocess(haze_frame, diffusion_model.input_range)
+        _hazy_images = postprocess(hazy_images, diffusion_model.input_range)
+        frame_array = create_animation_frame(_hazy_images, tissue_frame, haze_frame)
+        animation_frames.append(frame_array)
+        progbar.add(1)
+
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    animation_path = Path(output_path).with_suffix(".gif")
+    save_to_gif(animation_frames, animation_path, fps=fps)
 
 
 def main(json_file: str, output_dir: str = "plots", method: str = "semantic_dps"):

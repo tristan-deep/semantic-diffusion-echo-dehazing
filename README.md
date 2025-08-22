@@ -13,6 +13,9 @@
 	<p>Eindhoven University of Technology, the Netherlands</p>
 </div>
 
+<p align="center">
+	<img src="animation.gif" alt="Cardiac Ultrasound Dehazing Animation" style="max-width: 100%; height: auto;">
+</p>
 
 ### Installation
 
@@ -21,6 +24,7 @@ The algorithm is implemented using Keras with JAX backend. Furthermore it heavil
 Either install the following in your Python environment, or use the [Dockerfile](./Dockerfile) provided in this repository.
 
 ```bash
+# requires Python>=3.10
 pip install tyro optuna zea==0.0.4
 pip install -U "jax[cuda12]"
 ```

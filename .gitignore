@@ -2,6 +2,7 @@
 .env
 temp/
 *.png
+!assets/*.png
 *.pdf
 *.hash
 *.npz

@@ -1,0 +1,32 @@
+# While these params optimize for the final score of the challenge
+# generally we observe lower perceptual quality of the dehazed results
+# and in some cases even artifacts.
+# we therefore recommend using configs/semantic_dps.yaml instead.
+diffusion_model_path: "hf://tristan-deep/semantic-diffusion-echo-dehazing"
+segmentation_model_path: "hf://tristan-deep/semantic-segmentation-echo-dehazing"
+seed: 42
+
+params:
+  diffusion_steps: 480
+  initial_diffusion_step: 0
+  batch_size: 16
+  threshold_output_quantile: 0.17447
+  preserve_bottom_percent: 32.0
+  bottom_transition_width: 7.0
+
+  mask_params:
+    sigma: 0.4704516
+    threshold: 0.18935
+  fixed_mask_params:
+    top_px: 20
+    bottom_px: 40
+  skeleton_params:
+    sigma_pre: 9.919
+    sigma_post: 9.5347840479
+    threshold: 0.73917
+  guidance_kwargs:
+    omega: 0.78
+    omega_vent: 0.0001
+    omega_sept: 15.84
+    eta: 0.01105
+    smooth_l1_beta: 6.3726
