@@ -4,4 +4,5 @@ tyro
 optuna
 gradio
 spaces
+tensorflow
 keras==3.11
