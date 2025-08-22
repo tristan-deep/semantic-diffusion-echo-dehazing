@@ -411,7 +411,7 @@ def run(
     num_images = hazy_images.shape[0]
     num_batches = (num_images + batch_size - 1) // batch_size
 
-    progbar = keras.utils.Progbar(num_batches, verbose=verbose)
+    progbar = keras.utils.Progbar(num_batches, verbose=verbose, unit_name="batch")
     i = 0
     batch_idx = 0
     for i in range(num_batches):
@@ -475,7 +475,7 @@ def run(
 def main(
     input_folder: str = "./assets",
     output_folder: str = "./temp",
-    num_imgs_plot: int = 4,
+    num_imgs_plot: int = 5,
     device: str = "auto:1",
     config: str = "configs/semantic_dps.yaml",
 ):
@@ -488,6 +488,7 @@ def main(
     seed = jax.random.PRNGKey(config.seed)
 
     paths = list(Path(input_folder).glob("*.png"))
+    paths = sorted(paths)
 
     output_folder = Path(output_folder)
 

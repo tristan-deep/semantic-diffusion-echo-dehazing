@@ -142,7 +142,7 @@ def plot_batch_with_named_masks(
 
         im = axes[0].get_images()[0] if axes[0].get_images() else None
         cbar = fig.colorbar(im, cax=cax)
-        cbar.set_label(r"Guidance weighting \mathbf{p}")
+        cbar.set_label(r"Guidance weighting $\mathbf{p}$")
         cbar.ax.yaxis.set_major_locator(plt.MaxNLocator(nbins=6))
         cbar.ax.yaxis.set_tick_params(labelsize=7)
         cbar.ax.yaxis.label.set_size(8)
@@ -189,7 +189,7 @@ def plot_dehazed_results(
 
 def plot_metrics(metrics, limits, out_path):
     plt.style.use("seaborn-v0_8-darkgrid")
-    fig, axes = plt.subplots(1, len(metrics), figsize=(7.2, 2.7), dpi=600)
+    fig, axes = plt.subplots(1, len(metrics), figsize=(7.2, 2.7), dpi=200)
     colors = ["#0057b7", "#ffb300", "#008744", "#d62d20"]
     metric_labels = {
         "CNR": r"CNR $\uparrow$",
