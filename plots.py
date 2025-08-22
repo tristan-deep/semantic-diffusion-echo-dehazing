@@ -329,6 +329,9 @@ def plot_optimization_history_from_json(
     fig.savefig(
         output_path / f"optimization_history_{method}.png", dpi=600, bbox_inches="tight"
     )
+    fig.savefig(
+        output_path / f"optimization_history_{method}.pdf", dpi=600, bbox_inches="tight"
+    )
     plt.close(fig)
 
 
