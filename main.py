@@ -1,5 +1,8 @@
 import copy
+import os
 from pathlib import Path
+
+os.environ["KERAS_BACKEND"] = "jax"
 
 import jax
 import keras

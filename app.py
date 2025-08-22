@@ -1,6 +1,8 @@
 import os
 import time
 
+os.environ["KERAS_BACKEND"] = "jax"
+
 import gradio as gr
 import jax
 import numpy as np

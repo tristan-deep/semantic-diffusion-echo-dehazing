@@ -4,3 +4,4 @@ tyro
 optuna
 gradio
 spaces
+keras==3.11
