@@ -1,9 +1,13 @@
 import os
 
+os.environ["KERAS_BACKEND"] = "jax"
+
 import gradio as gr
 import jax
+import keras
 import numpy as np
 import spaces
+import tensorflow as tf
 from PIL import Image
 
 from main import Config, init, run
@@ -28,9 +32,12 @@ def initialize_model():
 
 
 @spaces.GPU(duration=30)
-
-# Generator function for status updates
 def process_image(input_img, diffusion_steps, omega, omega_vent, omega_sept, eta):
+    print(f"Keras backend: {os.environ['KERAS_BACKEND']} and {keras.backend.backend()}")
+    print(f"Keras version: {keras.__version__}, JAX version: {jax.__version__}")
+    print(f"JAX cuda: {jax.devices()}")
+    print(f"Tensorflow devices: {tf.config.list_physical_devices()}")
+
     if input_img is None:
         yield (
             gr.update(
