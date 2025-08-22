@@ -1,5 +1,8 @@
+from pathlib import Path
+
 import numpy as np
 from keras import ops
+from PIL import Image
 from skimage import filters, morphology
 from zea.utils import translate
 
@@ -131,3 +134,30 @@ def extract_skeleton(images, input_range, sigma_pre=4, sigma_post=4, threshold=0
     skeleton_masks = (skeleton_masks - min_val) / (max_val - min_val + 1e-8)
 
     return ops.convert_to_tensor(skeleton_masks, dtype=images.dtype)
+
+
+def load_image(filename, grayscale=True):
+    """Load an image file and return a numpy array using PIL.
+
+    Args:
+        filename (str): The path to the image file.
+        grayscale (bool, optional): Whether to convert the image to grayscale. Defaults to True.
+
+    Returns:
+        numpy.ndarray: A numpy array of the image.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+    """
+    filename = Path(filename)
+    if not filename.exists():
+        raise FileNotFoundError(f"File {filename} does not exist")
+
+    img = Image.open(filename)
+    if grayscale:
+        img = img.convert("L")
+    else:
+        img = img.convert("RGB")
+
+    arr = np.array(img)
+    return arr

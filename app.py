@@ -7,10 +7,10 @@ import gradio as gr
 import jax
 import numpy as np
 import spaces
-import zea
 from PIL import Image
 
 from main import Config, init, run
+from utils import load_image
 
 CONFIG_PATH = "configs/semantic_dps.yaml"
 SLIDER_CONFIG_PATH = "configs/slider_params.yaml"
@@ -127,7 +127,7 @@ example_image_paths = [
     for f in os.listdir(ASSETS_DIR)
     if f.lower().endswith(".png")
 ]
-example_images = [zea.io_lib.load_image(p) for p in example_image_paths]
+example_images = [load_image(p) for p in example_image_paths]
 examples = [[img] for img in example_images]
 
 

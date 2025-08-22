@@ -23,6 +23,7 @@ from zea import init_device, log
 
 from eval import evaluate
 from main import init, run
+from utils import load_image
 
 
 def load_images_from_dir(input_folder):
@@ -31,7 +32,7 @@ def load_images_from_dir(input_folder):
 
     images = []
     for path in paths:
-        image = zea.io_lib.load_image(path)
+        image = load_image(path)
         images.append(image)
 
     if len(images) == 0:

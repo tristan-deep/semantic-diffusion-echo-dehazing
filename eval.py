@@ -9,10 +9,10 @@ from PIL import Image
 from scipy.ndimage import binary_erosion, distance_transform_edt
 from scipy.stats import ks_2samp
 from zea import log
-from zea.io_lib import load_image
 
 import fid_score
 from plots import plot_metrics
+from utils import load_image
 
 
 def calculate_fid_score(denoised_image_dirs, ground_truth_dir):

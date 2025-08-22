@@ -28,6 +28,7 @@ from plots import create_animation, plot_batch_with_named_masks, plot_dehazed_re
 from utils import (
     apply_bottom_preservation,
     extract_skeleton,
+    load_image,
     postprocess,
     preprocess,
     smooth_L1,
@@ -374,7 +375,7 @@ def main(
 
     images = []
     for path in paths:
-        image = zea.io_lib.load_image(path)
+        image = load_image(path)
         images.append(image)
     images = ops.stack(images, axis=0)
 
