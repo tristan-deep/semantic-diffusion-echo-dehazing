@@ -28,6 +28,12 @@ Either install the following in your Python environment, or use the [Dockerfile]
 pip install -r requirements.txt
 ```
 
+Also install [JAX](https://github.com/google/jax#installation). Note this can vary depending on your system.
+
+```bash
+pip install jax[cuda12]
+```
+
 > [!NOTE]
 > Although the code was primarily tested with JAX as the Keras backend, TensorFlow and PyTorch should also work.
 
