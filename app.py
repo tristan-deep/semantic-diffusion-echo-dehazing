@@ -215,7 +215,12 @@ with gr.Blocks() as demo:
     )
     with gr.Row():
         with gr.Column():
-            img1 = gr.Image(label="Input Image", type="pil", webcam_options=False, value=example_images[0] if example_images else None)
+            img1 = gr.Image(
+                label="Input Image",
+                type="pil",
+                webcam_options=False,
+                value=example_images[0] if example_images else None,
+            )
             gr.Examples(examples=examples, inputs=[img1])
         with gr.Column():
             img2 = gr.ImageSlider(label="Dehazed Image", type="pil")
