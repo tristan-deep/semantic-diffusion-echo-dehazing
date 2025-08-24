@@ -5,7 +5,6 @@ os.environ["KERAS_BACKEND"] = "jax"
 import gradio as gr
 import jax
 import numpy as np
-import spaces
 from PIL import Image
 from zea import init_device
 
@@ -69,7 +68,6 @@ def initialize_model():
     return config, diffusion_model
 
 
-@spaces.GPU(duration=30)
 def process_image(input_img, diffusion_steps, omega, omega_vent, omega_sept, eta):
     global config, diffusion_model, model_loaded
     if not model_loaded:

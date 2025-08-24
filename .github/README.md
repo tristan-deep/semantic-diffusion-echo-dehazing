@@ -25,7 +25,7 @@ Either install the following in your Python environment, or use the [Dockerfile]
 
 ```bash
 # requires Python>=3.10
-pip install tyro optuna zea==0.0.4
+pip install gradio tyro optuna zea==0.0.4
 pip install -U "jax[cuda12]"
 ```
 
@@ -45,3 +45,12 @@ Alternatively, you can use the Gradio app provided in this repository to interac
 ```bash
 python app.py
 ```
+
+or with docker
+
+```bash
+docker build -t cardiac-ultrasound-dehazing .
+docker run cardiac-ultrasound-dehazing python app.py
+```
+
+Then, open your web browser and navigate to `http://localhost:7860` to access the Gradio interface.
