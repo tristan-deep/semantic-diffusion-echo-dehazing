@@ -8,3 +8,4 @@ temp/
 *.npz
 sweep_results/
 .gradio
+__pycache__
