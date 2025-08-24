@@ -59,3 +59,9 @@ Some example images are downloaded in the [./assets](./assets) folder. The model
 ```bash
 python main.py --input-folder ./assets --output-folder ./temp
 ```
+
+Alternatively, you can use the Gradio app provided in this repository to interact with the model via a web interface. To launch the app, run:
+
+```bash
+python app.py
+```

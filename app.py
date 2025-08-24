@@ -4,11 +4,10 @@ os.environ["KERAS_BACKEND"] = "jax"
 
 import gradio as gr
 import jax
-import keras
 import numpy as np
 import spaces
-import tensorflow as tf
 from PIL import Image
+from zea import init_device
 
 from main import Config, init, run
 from utils import load_image
@@ -16,55 +15,81 @@ from utils import load_image
 CONFIG_PATH = "configs/semantic_dps.yaml"
 SLIDER_CONFIG_PATH = "configs/slider_params.yaml"
 ASSETS_DIR = "assets"
+DEVICE = None
+
+STATUS_STYLE_LOAD = "display:flex;align-items:center;justify-content:center;padding:40px 10px 18px 10px;border-radius:8px;font-weight:bold;font-size:1.15em;line-height:1.5;align-items:center;"
+
+STATUS_STYLE = "display:flex;align-items:center;justify-content:center;padding:18px 18px 18px 10px;border-radius:8px;font-weight:bold;font-size:1.15em;line-height:1.1;align-items:center;"
 
 description = """
-# Semantic Diffusion Posterior Sampling for Cardiac Ultrasound Dehazing
-Select an example image below. The algorithm will dehaze the image. Note that the algorithm was heavily tuned for the DehazingEcho2025 challenge dataset, and not optimized for generalization. Therefore it is not expected to work well on any type of echocardiogram.
+# Cardiac Ultrasound Dehazing with Semantic Diffusion
 
-Two parameters that are interesting to control and adjust the amount of dehazing are the "Omega (Ventricle)" and "Eta (haze prior)"
+Select an example image below to see the dehazing algorithm in action. The algorithm was tuned for the DehazingEcho2025 challenge dataset, so be wary of using it on other datasets.
+
+Tip: Adjust "Omega (Ventricle)" and "Eta (haze prior)" to control the dehazing effect.
 """
 
 
+# Model and config will be loaded after UI is rendered
+config, diffusion_model = None, None
+model_loaded = False
+
+
 def initialize_model():
-    config = Config.from_yaml(CONFIG_PATH)
-    diffusion_model = init(config)
+    global config, diffusion_model, model_loaded
+    if config is None or diffusion_model is None:
+        config = Config.from_yaml(CONFIG_PATH)
+        diffusion_model = init(config)
+        # Warm-up: run a dummy inference to initialize weights, JIT, etc.
+        h, w = diffusion_model.input_shape[:2]
+        dummy_img = np.zeros((1, h, w), dtype=np.float32)
+        params = config.params
+        guidance_kwargs = {
+            "omega": params["guidance_kwargs"]["omega"],
+            "omega_vent": params["guidance_kwargs"].get("omega_vent", 1.0),
+            "omega_sept": params["guidance_kwargs"].get("omega_sept", 1.0),
+            "eta": params["guidance_kwargs"].get("eta", 1.0),
+            "smooth_l1_beta": params["guidance_kwargs"]["smooth_l1_beta"],
+        }
+        seed = jax.random.PRNGKey(config.seed)
+        run(
+            hazy_images=dummy_img,
+            diffusion_model=diffusion_model,
+            seed=seed,
+            guidance_kwargs=guidance_kwargs,
+            mask_params=params["mask_params"],
+            fixed_mask_params=params["fixed_mask_params"],
+            skeleton_params=params["skeleton_params"],
+            batch_size=1,
+            diffusion_steps=1,
+            verbose=False,
+        )
+
+        model_loaded = True
     return config, diffusion_model
 
 
 @spaces.GPU(duration=30)
 def process_image(input_img, diffusion_steps, omega, omega_vent, omega_sept, eta):
-    print(f"Keras backend: {os.environ['KERAS_BACKEND']} and {keras.backend.backend()}")
-    print(f"Keras version: {keras.__version__}, JAX version: {jax.__version__}")
-    print(f"JAX cuda: {jax.devices()}")
-    print(f"Tensorflow devices: {tf.config.list_physical_devices()}")
+    global config, diffusion_model, model_loaded
+    if not model_loaded:
+        yield (
+            gr.update(
+                value=f'<div style="background:#ffeeba;{STATUS_STYLE}color:#856404;">⏳ Model is still loading. Please wait...</div>'
+            ),
+            None,
+        )
+        return
 
     if input_img is None:
         yield (
             gr.update(
-                value='<div style="background:#ffeeba;padding:10px;border-radius:6px;font-weight:bold;font-size:1.1em;color:#856404;">⚠️ No input image was provided. Please select or upload an image before running.</div>'
+                value=f'<div style="background:#ffeeba;{STATUS_STYLE}color:#856404;">⚠️ No input image was provided. Please select or upload an image before running.</div>'
             ),
             None,
         )
         return
-    # Show loading message
-    yield (
-        gr.update(
-            value='<div style="background:#ffeeba;padding:10px;border-radius:6px;font-weight:bold;font-size:1.1em;color:#856404;">⏳ Loading model...</div>'
-        ),
-        None,
-    )
-
-    try:
-        config, diffusion_model = initialize_model()
-        params = config.params
-    except Exception as e:
-        yield (
-            gr.update(
-                value=f'<div style="background:#f8d7da;padding:10px;border-radius:6px;font-weight:bold;font-size:1.1em;color:#721c24;">❌ Error initializing model: {e}</div>'
-            ),
-            None,
-        )
-        return
+    params = config.params
 
     def _prepare_image(image):
         resized = False
@@ -85,7 +110,7 @@ def process_image(input_img, diffusion_steps, omega, omega_vent, omega_sept, eta
     except Exception as e:
         yield (
             gr.update(
-                value=f'<div style="background:#f8d7da;padding:10px;border-radius:6px;font-weight:bold;font-size:1.1em;color:#721c24;">❌ Error preparing input image: {e}</div>'
+                value=f'<div style="background:#f8d7da;{STATUS_STYLE}color:#721c24;">❌ Error preparing input image: {e}</div>'
             ),
             None,
         )
@@ -104,7 +129,7 @@ def process_image(input_img, diffusion_steps, omega, omega_vent, omega_sept, eta
     try:
         yield (
             gr.update(
-                value='<div style="background:#ffeeba;padding:10px;border-radius:6px;font-weight:bold;font-size:1.1em;color:#856404;">🌀 Running dehazing algorithm... (First time takes longer...) <span style="font-weight:normal;font-size:0.95em;">(first time takes longer)</span></div>'
+                value=f'<div style="background:#cce5ff;{STATUS_STYLE}color:#004085;">🌀 Running dehazing algorithm...</div>'
             ),
             None,
         )
@@ -126,7 +151,7 @@ def process_image(input_img, diffusion_steps, omega, omega_vent, omega_sept, eta
     except Exception as e:
         yield (
             gr.update(
-                value=f'<div style="background:#f8d7da;padding:10px;border-radius:6px;font-weight:bold;font-size:1.1em;color:#721c24;">❌ The algorithm failed to process the image: {e}</div>'
+                value=f'<div style="background:#f8d7da;{STATUS_STYLE}color:#721c24;">❌ The algorithm failed to process the image: {e}</div>'
             ),
             None,
         )
@@ -137,10 +162,9 @@ def process_image(input_img, diffusion_steps, omega, omega_vent, omega_sept, eta
     out_pil = Image.fromarray(out_img)
     if resized and out_pil.size != (orig_shape[1], orig_shape[0]):
         out_pil = out_pil.resize((orig_shape[1], orig_shape[0]), Image.BILINEAR)
-    yield gr.update(value="Done!"), (input_img, out_pil)
     yield (
         gr.update(
-            value='<div style="background:#d4edda;padding:10px;border-radius:6px;font-weight:bold;font-size:1.1em;color:#155724;">✅ Done!</div>'
+            value=f'<div style="background:#d4edda;{STATUS_STYLE}color:#155724;">✅ Done!</div>'
         ),
         (input_img, out_pil),
     )
@@ -185,11 +209,16 @@ examples = [[img] for img in example_images]
 
 with gr.Blocks() as demo:
     gr.Markdown(description)
-    status = gr.Markdown("", visible=True)
+    status = gr.Markdown(
+        f'<div style="background:#ffeeba;{STATUS_STYLE_LOAD}color:#856404;">⏳ Loading model...</div>',
+        visible=True,
+    )
     with gr.Row():
-        img1 = gr.Image(label="Input Image", type="pil", webcam_options=False)
-        img2 = gr.ImageSlider(label="Dehazed Image", type="pil")
-    gr.Examples(examples=examples, inputs=[img1])
+        with gr.Column():
+            img1 = gr.Image(label="Input Image", type="pil", webcam_options=False, value=example_images[0] if example_images else None)
+            gr.Examples(examples=examples, inputs=[img1])
+        with gr.Column():
+            img2 = gr.ImageSlider(label="Dehazed Image", type="pil")
     with gr.Row():
         diffusion_steps_slider = gr.Slider(
             minimum=diffusion_steps_min,
@@ -226,7 +255,7 @@ with gr.Blocks() as demo:
             value=eta_default,
             label="Eta (haze prior)",
         )
-    run_btn = gr.Button("Run")
+    run_btn = gr.Button("Run", interactive=False)
 
     run_btn.click(
         process_image,
@@ -240,6 +269,27 @@ with gr.Blocks() as demo:
         ],
         outputs=[status, img2],
         queue=True,
+    )
+
+    def load_model_event():
+        global config, diffusion_model, model_loaded, DEVICE
+        try:
+            if DEVICE is None:
+                DEVICE = init_device()
+            config, diffusion_model = initialize_model()
+            ready_msg = gr.update(
+                value=f'<div style="background:#d4edda;{STATUS_STYLE}color:#155724;">✅ Model loaded! You can now press Run.</div>'
+            )
+            return ready_msg, gr.update(interactive=True)
+        except Exception as e:
+            return gr.update(
+                value=f'<div style="background:#f8d7da;{STATUS_STYLE}color:#721c24;">❌ Error loading model: {e}</div>'
+            ), gr.update(interactive=False)
+
+    demo.load(
+        load_model_event,
+        inputs=None,
+        outputs=[status, run_btn],
     )
 
 if __name__ == "__main__":
