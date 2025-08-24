@@ -1,8 +1,7 @@
 zea==0.0.4
+keras==3.11
 jax[cuda12]
 tyro
 optuna
 gradio
-spaces
 tensorflow
-keras==3.11
