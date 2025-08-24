@@ -14,7 +14,7 @@
 </div>
 
 <p align="center">
-	<img src="./paper/animation.gif" alt="Cardiac Ultrasound Dehazing Animation" style="max-width: 100%; height: auto;">
+	<img src="https://github.com/tristan-deep/semantic-diffusion-echo-dehazing/raw/main/paper/animation.gif" alt="Cardiac Ultrasound Dehazing Animation" style="max-width: 100%; height: auto;">
 </p>
 
 ### Installation
