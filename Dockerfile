@@ -1,6 +1,6 @@
 FROM zeahub/all:v0.0.4
 
-RUN pip install --no-cache-dir tyro optuna
+RUN pip install --no-cache-dir gradio tyro optuna
 
 RUN pip install --no-cache-dir --no-deps pytorch_fid
 
