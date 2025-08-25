@@ -50,3 +50,7 @@ Alternatively, you can use the Gradio app provided in this repository to interac
 ```bash
 python app.py
 ```
+
+<p align="center">
+	<img src="https://github.com/tristan-deep/semantic-diffusion-echo-dehazing/raw/main/paper/gradio_demo.gif" alt="Gradio Demo" style="max-width: 100%; height: auto;">
+</p>
