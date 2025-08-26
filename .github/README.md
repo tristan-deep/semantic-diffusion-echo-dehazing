@@ -1,8 +1,15 @@
 <div align="center">
 	<h1>Semantic Diffusion Posterior Sampling for Cardiac Ultrasound Dehazing</h1>
 	<p>
-		<a href="https://arxiv.org/abs/0000.0000"><img src="https://img.shields.io/badge/arXiv-0000.0000-b31b1b.svg?logo=arXiv" alt="arXiv"></a>
-		<a href="https://huggingface.co/collections/tristan-deep/semantic-diffusion-posterior-sampling-for-cardiac-ultrasound-68a70559a7f719c7e6bd5788"><img src="https://img.shields.io/badge/🤗%20Hugging%20Face-Model-orange" alt="Hugging Face Model"></a>
+		<a href="https://github.com/tristan-deep/semantic-diffusion-echo-dehazing">
+			<img src="https://img.shields.io/badge/GitHub-100000?style=flat&logo=github&logoColor=white" alt="GitHub">
+		</a>
+		<a href="https://arxiv.org/abs/2508.17326">
+			<img src="https://img.shields.io/badge/arXiv-B31B1B?style=flat&logo=arXiv&logoColor=white" alt="Paper">
+		</a>
+		<a href="https://huggingface.co/collections/tristan-deep/semantic-diffusion-posterior-sampling-for-cardiac-ultrasound-68a70559a7f719c7e6bd5788">
+			<img src="https://img.shields.io/badge/Huggingface-FFD21E?style=flat&logo=Hugging Face&logoColor=black" alt="Hugging Face">
+		</a>
 		<a href="https://keras.io/"><img src="https://img.shields.io/badge/Keras-EE4C2C?logo=keras&logoColor=white" alt="Keras"></a>
 	</p>
 		<h3>
