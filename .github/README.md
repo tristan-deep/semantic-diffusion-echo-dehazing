@@ -8,7 +8,7 @@
 			<img src="https://img.shields.io/badge/arXiv-B31B1B?style=flat&logo=arXiv&logoColor=white" alt="Paper">
 		</a>
 		<a href="https://huggingface.co/collections/tristan-deep/semantic-diffusion-posterior-sampling-for-cardiac-ultrasound-68a70559a7f719c7e6bd5788">
-			<img src="https://img.shields.io/badge/Huggingface-FFD21E?style=flat&logo=Hugging Face&logoColor=black" alt="Hugging Face">
+			<img src="https://img.shields.io/badge/Hugging%20Face-FFD21E?logo=huggingface&logoColor=000" alt="Hugging Face">
 		</a>
 		<a href="https://keras.io/"><img src="https://img.shields.io/badge/Keras-EE4C2C?logo=keras&logoColor=white" alt="Keras"></a>
 	</p>
