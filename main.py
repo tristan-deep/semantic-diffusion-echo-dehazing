@@ -21,8 +21,8 @@ from zea.models.diffusion import (
     DiffusionModel,
     diffusion_guidance_registry,
 )
+from zea.ops import translate
 from zea.tensor_ops import L2
-from zea.utils import translate
 
 from plots import create_animation, plot_batch_with_named_masks, plot_dehazed_results
 from utils import (

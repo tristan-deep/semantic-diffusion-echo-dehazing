@@ -1,4 +1,4 @@
-FROM zeahub/all:v0.0.4
+FROM zeahub/all:v0.0.8
 
 RUN pip install --no-cache-dir gradio tyro optuna
 

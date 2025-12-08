@@ -13,7 +13,7 @@ from matplotlib.path import Path as pltPath
 from PIL import Image
 from skimage import measure
 from zea import log
-from zea.utils import save_to_gif
+from zea.io_lib import save_to_gif
 from zea.visualize import plot_image_grid
 
 from utils import postprocess
