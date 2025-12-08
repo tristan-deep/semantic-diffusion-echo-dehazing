@@ -39,6 +39,9 @@ class IdentityOperator(Operator):
     def forward(self, data):
         return data
 
+    def transpose(self, data):
+        return data
+
     def __str__(self):
         return "y = x"
 
@@ -368,6 +371,10 @@ def main(
 
     paths = list(Path(input_folder).glob("*.png"))
     paths = sorted(paths)
+
+    if len(paths) == 0:
+        log.error(f"No PNG images found in the input folder: {input_folder}")
+        return
 
     output_folder = Path(output_folder)
 
