@@ -8,7 +8,7 @@ seed: 42
 
 params:
   diffusion_steps: 480
-  initial_diffusion_step: 0
+  initial_step: 0
   batch_size: 16
   threshold_output_quantile: 0.17447
   preserve_bottom_percent: 32.0

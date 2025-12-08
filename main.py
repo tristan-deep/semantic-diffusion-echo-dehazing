@@ -284,6 +284,7 @@ def run(
     preserve_bottom_percent: float = 30.0,
     bottom_transition_width: float = 10.0,
     verbose: bool = True,
+    **kwargs,
 ):
     input_range = diffusion_model.input_range
 
@@ -314,6 +315,7 @@ def run(
             haze_mask=masks["haze"],
             eta=guidance_kwargs["eta"],
             smooth_l1_beta=guidance_kwargs["smooth_l1_beta"],
+            **kwargs,
         )
         batch_images = ops.take(batch_images, 0, axis=1)
 
