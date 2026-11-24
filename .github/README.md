@@ -52,6 +52,12 @@ Some example images are downloaded in the [./assets](./assets) folder. The model
 python main.py --input-folder ./assets --output-folder ./temp
 ```
 
+You can also dehaze frames directly from the [DehazingEcho2025 dataset](https://huggingface.co/datasets/zeahub/DehazingEcho2025) (or any local [zea](https://github.com/tue-bmd/zea) file):
+
+```bash
+python main.py --input-folder hf://zeahub/DehazingEcho2025/noisy/patient-1-4C.hdf5 --frames 0 1 2 --output-folder ./temp
+```
+
 Alternatively, you can use the Gradio app provided in this repository to interact with the model via a web interface. To launch the app, run:
 
 ```bash
