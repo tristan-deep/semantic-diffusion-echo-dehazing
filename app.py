@@ -37,7 +37,7 @@ model_loaded = False
 def initialize_model():
     global config, diffusion_model, model_loaded
     if config is None or diffusion_model is None:
-        config = Config.from_yaml(CONFIG_PATH)
+        config = Config.from_path(CONFIG_PATH)
         diffusion_model = init(config)
         # Warm-up: run a dummy inference to initialize weights, JIT, etc.
         h, w = diffusion_model.input_shape[:2]
@@ -168,7 +168,7 @@ def process_image(input_img, diffusion_steps, omega, omega_vent, omega_sept, eta
     )
 
 
-slider_params = Config.from_yaml(SLIDER_CONFIG_PATH)
+slider_params = Config.from_path(SLIDER_CONFIG_PATH)
 
 diffusion_steps_default = slider_params["diffusion_steps"]["default"]
 diffusion_steps_min = slider_params["diffusion_steps"]["min"]

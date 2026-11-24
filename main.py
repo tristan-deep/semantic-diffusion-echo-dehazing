@@ -15,14 +15,13 @@ from keras import ops
 from PIL import Image
 from skimage import filters
 from zea import Config, init_device, log
+from zea.func import L2, translate
 from zea.internal.operators import Operator
 from zea.models.diffusion import (
     DPS,
     DiffusionModel,
     diffusion_guidance_registry,
 )
-from zea.ops import translate
-from zea.tensor_ops import L2
 
 from plots import create_animation, plot_batch_with_named_masks, plot_dehazed_results
 from utils import (
@@ -270,6 +269,37 @@ def load_segmentation_model(path):
     return segmentation_model
 
 
+_SAMPLERS = {}
+
+
+def get_jit_sampler(diffusion_model: DiffusionModel, diffusion_steps: int):
+    """Return a cached, fully jit-compiled posterior sampler.
+
+    Compiling the whole reverse diffusion loop once avoids re-tracing it for
+    every batch. Results are identical to the eager loop.
+    """
+    key = (id(diffusion_model), diffusion_steps)
+    if key not in _SAMPLERS:
+
+        @jax.jit
+        def sample(batch, seed, per_pixel_omega, haze_mask, eta, smooth_l1_beta):
+            return diffusion_model.posterior_sample(
+                batch,
+                n_samples=batch.shape[0],
+                n_steps=diffusion_steps,
+                seed=seed,
+                verbose=False,
+                track_progress_type=None,
+                per_pixel_omega=per_pixel_omega,
+                haze_mask=haze_mask,
+                eta=eta,
+                smooth_l1_beta=smooth_l1_beta,
+            )
+
+        _SAMPLERS[key] = sample
+    return _SAMPLERS[key]
+
+
 def run(
     hazy_images: any,
     diffusion_model: DiffusionModel,
@@ -284,6 +314,8 @@ def run(
     preserve_bottom_percent: float = 30.0,
     bottom_transition_width: float = 10.0,
     verbose: bool = True,
+    track_progress_type: str | None = "x_0",
+    jit_sampler: bool = False,
     **kwargs,
 ):
     input_range = diffusion_model.input_range
@@ -305,19 +337,35 @@ def run(
             batch, mask_params, fixed_mask_params, skeleton_params, guidance_kwargs
         )
 
+        if jit_sampler:
+            sampler = get_jit_sampler(diffusion_model, diffusion_steps)
+            batch_images = sampler(
+                batch,
+                seed,
+                ops.convert_to_tensor(masks["per_pixel_omega"]),
+                ops.convert_to_tensor(masks["haze"]),
+                guidance_kwargs["eta"],
+                guidance_kwargs["smooth_l1_beta"],
+            )
+            pred_tissue_images.append(batch_images)
+            masks_out.append(masks)
+            batch_idx += 1
+            progbar.update(batch_idx)
+            continue
+
         batch_images = diffusion_model.posterior_sample(
             batch,
-            n_samples=1,
+            n_samples=len(batch),
             n_steps=diffusion_steps,
             seed=seed,
-            verbose=True,
+            verbose=verbose,
+            track_progress_type=track_progress_type,
             per_pixel_omega=masks["per_pixel_omega"],
             haze_mask=masks["haze"],
             eta=guidance_kwargs["eta"],
             smooth_l1_beta=guidance_kwargs["smooth_l1_beta"],
             **kwargs,
         )
-        batch_images = ops.take(batch_images, 0, axis=1)
 
         pred_tissue_images.append(batch_images)
         masks_out.append(masks)
@@ -368,7 +416,7 @@ def main(
     zea.visualize.set_mpl_style()
     init_device(device)
 
-    config = Config.from_yaml(config)
+    config = Config.from_path(config)
     seed = jax.random.PRNGKey(config.seed)
 
     paths = list(Path(input_folder).glob("*.png"))

@@ -1,5 +1,5 @@
-zea==0.0.8
-keras==3.12
+zea==0.1.9
+keras>=3.12
 tyro
 optuna
 gradio
