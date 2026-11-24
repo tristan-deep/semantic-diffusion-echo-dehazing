@@ -4,7 +4,7 @@ import numpy as np
 from keras import ops
 from PIL import Image
 from skimage import filters, morphology
-from zea.ops import translate
+from zea.func import translate
 
 
 def L1(x):
