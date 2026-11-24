@@ -9,3 +9,5 @@ temp/
 sweep_results/
 .gradio
 __pycache__
+input/
+output/

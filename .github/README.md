@@ -67,3 +67,18 @@ python app.py
 <p align="center">
 	<img src="https://github.com/tristan-deep/semantic-diffusion-echo-dehazing/raw/main/paper/gradio_demo.gif" alt="Gradio Demo" style="max-width: 100%; height: auto;">
 </p>
+
+### Inference speed benchmark
+
+Put 256 × 256 PNG images in `./input` and run:
+
+```bash
+python benchmark.py --input-folder ./input --output-folder ./output --batch-size 8
+```
+
+The models are loaded and warmed up first, then each batch is timed (excluding disk I/O). The dehazed images are saved to `./output` with the original file names, and the script reports the GPU, ms/batch, ms/frame and FPS. Results do not depend on the batch size.
+
+On an NVIDIA L40S (batch size 8, 480 diffusion steps): 13.5 s/batch, 1.69 s/frame, 0.59 FPS.
+
+> [!NOTE]
+> JAX does not support CUDA GPUs on native Windows. On Windows, use [WSL2](https://learn.microsoft.com/windows/wsl/install).
