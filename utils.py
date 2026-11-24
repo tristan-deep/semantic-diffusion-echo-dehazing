@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+import zea
 from keras import ops
 from PIL import Image
 from skimage import filters, morphology
@@ -156,3 +157,54 @@ def load_image(filename, grayscale=True):
 
     arr = np.array(img)
     return arr
+
+
+ZEA_SUFFIXES = (".hdf5", ".h5")
+
+
+def is_zea_file(path) -> bool:
+    """Whether ``path`` points to a zea file (local or ``hf://``)."""
+    return str(path).endswith(ZEA_SUFFIXES)
+
+
+def load_zea_frames(path, frames=None):
+    """Load B-mode frames from a zea file, e.g. from the DehazingEcho2025 dataset.
+
+    Args:
+        path (str): Local path or Hugging Face path, e.g.
+            ``hf://zeahub/DehazingEcho2025/noisy/patient-1-4C.hdf5``.
+        frames (list[int], optional): Frame indices (0-based) to load.
+            Defaults to all frames.
+
+    Returns:
+        tuple: ``(images, frames)`` with ``images`` a uint8 array of shape
+        ``(n_frames, height, width)`` and ``frames`` the loaded frame indices.
+    """
+    with zea.File(str(path)) as file:
+        values = file.data.image.values
+        if frames is None:
+            frames = list(range(values.shape[0]))
+        images = np.stack([values[i] for i in frames])
+    return images.astype(np.uint8), list(frames)
+
+
+def load_images(input_path, frames=None):
+    """Load images from a folder of PNGs or from a zea file.
+
+    Returns:
+        tuple: ``(images, names)`` with ``images`` a uint8 array of shape
+        ``(n, height, width)`` and ``names`` the output file names. For zea
+        files, names follow the challenge convention ``<stem>-frame-<n>.png``
+        with ``n`` 1-based.
+    """
+    if is_zea_file(input_path):
+        images, frames = load_zea_frames(input_path, frames)
+        stem = Path(str(input_path)).stem
+        names = [f"{stem}-frame-{i + 1}.png" for i in frames]
+        return images, names
+
+    paths = sorted(Path(input_path).glob("*.png"))
+    if not paths:
+        return np.zeros((0, 0, 0), dtype=np.uint8), []
+    images = np.stack([load_image(p) for p in paths])
+    return images, [p.name for p in paths]

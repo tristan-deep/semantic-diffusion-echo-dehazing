@@ -6,14 +6,24 @@ import gradio as gr
 import jax
 import numpy as np
 from PIL import Image
-from zea import init_device
+from zea import init_device, log
 
 from main import Config, init, run
-from utils import load_image
+from utils import load_image, load_zea_frames
 
 CONFIG_PATH = "configs/semantic_dps.yaml"
 SLIDER_CONFIG_PATH = "configs/slider_params.yaml"
 ASSETS_DIR = "assets"
+DATASET = "hf://zeahub/DehazingEcho2025"
+DEFAULT_ZEA_FILE = f"{DATASET}/noisy/patient-1-4C.hdf5"
+# Example frames (file, 0-based frame index) from the DehazingEcho2025 dataset.
+EXAMPLE_FRAMES = [
+    ("noisy/patient-46-4C.hdf5", 56),
+    ("noisy/patient-47-4C.hdf5", 58),
+    ("noisy/patient-38-4C.hdf5", 8),
+    ("noisy/patient-1-4C.hdf5", 1),
+    ("noisy/patient-21-4C.hdf5", 20),
+]
 DEVICE = None
 
 STATUS_STYLE_LOAD = "display:flex;align-items:center;justify-content:center;padding:40px 10px 18px 10px;border-radius:8px;font-weight:bold;font-size:1.15em;line-height:1.5;align-items:center;"
@@ -196,12 +206,35 @@ eta_max = slider_params["eta"]["max"]
 eta_step = slider_params["eta"]["step"]
 
 
-example_image_paths = [
-    os.path.join(ASSETS_DIR, f)
-    for f in os.listdir(ASSETS_DIR)
-    if f.lower().endswith(".png")
-]
-example_images = [load_image(p) for p in example_image_paths]
+def load_frame(path, frame):
+    """Load a single frame from a zea file (local or hf://) as a PIL image."""
+    images, _ = load_zea_frames(path, [int(frame)])
+    return Image.fromarray(images[0])
+
+
+def load_examples():
+    """Load the example frames from the dataset, or the bundled PNGs if offline."""
+    try:
+        images = [load_frame(f"{DATASET}/{f}", i) for f, i in EXAMPLE_FRAMES]
+    except Exception as e:
+        log.warning(f"Could not load examples from {DATASET}, using {ASSETS_DIR}: {e}")
+        paths = sorted(
+            os.path.join(ASSETS_DIR, f)
+            for f in os.listdir(ASSETS_DIR)
+            if f.lower().endswith(".png")
+        )
+        images = [Image.fromarray(load_image(p)) for p in paths]
+    return images
+
+
+def load_frame_event(path, frame):
+    try:
+        return load_frame(path, frame)
+    except Exception as e:
+        raise gr.Error(f"Could not load frame {frame} from {path}: {e}") from e
+
+
+example_images = load_examples()
 examples = [[img] for img in example_images]
 
 
@@ -222,6 +255,17 @@ with gr.Blocks() as demo:
             gr.Examples(examples=examples, inputs=[img1])
         with gr.Column():
             img2 = gr.ImageSlider(label="Dehazed Image", type="pil")
+    with gr.Accordion("Load a frame from a zea file", open=False):
+        gr.Markdown(
+            "Any file from the [DehazingEcho2025 dataset]"
+            "(https://huggingface.co/datasets/zeahub/DehazingEcho2025/tree/main/noisy)"
+            " (`hf://`) or a local `.hdf5` file. Press Enter or change the frame to load."
+        )
+        with gr.Row():
+            zea_path = gr.Textbox(value=DEFAULT_ZEA_FILE, label="zea file", scale=5)
+            zea_frame = gr.Number(
+                value=0, label="Frame", precision=0, minimum=0, min_width=80
+            )
     with gr.Row():
         diffusion_steps_slider = gr.Slider(
             minimum=diffusion_steps_min,
@@ -259,6 +303,14 @@ with gr.Blocks() as demo:
             label="Eta (haze prior)",
         )
     run_btn = gr.Button("Run", interactive=False)
+
+    for event in (zea_path.submit, zea_frame.submit, zea_frame.change):
+        event(
+            load_frame_event,
+            inputs=[zea_path, zea_frame],
+            outputs=[img1],
+            queue=False,
+        )
 
     run_btn.click(
         process_image,

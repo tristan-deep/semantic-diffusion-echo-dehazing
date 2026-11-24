@@ -27,7 +27,7 @@ from plots import create_animation, plot_batch_with_named_masks, plot_dehazed_re
 from utils import (
     apply_bottom_preservation,
     extract_skeleton,
-    load_image,
+    load_images,
     postprocess,
     preprocess,
     smooth_L1,
@@ -407,10 +407,23 @@ def run(
 def main(
     input_folder: str = "./assets",
     output_folder: str = "./temp",
+    frames: list[int] | None = None,
     num_imgs_plot: int = 5,
     device: str = "auto:1",
     config: str = "configs/semantic_dps.yaml",
 ):
+    """Dehaze images and save the results.
+
+    Args:
+        input_folder: Folder with PNG images, or a zea file (local or
+            ``hf://``), e.g. ``hf://zeahub/DehazingEcho2025/noisy/patient-1-4C.hdf5``.
+        output_folder: Folder to save the dehazed PNG images to.
+        frames: Frame indices (0-based) to dehaze when reading a zea file.
+            Defaults to all frames.
+        num_imgs_plot: Number of images to show in the result figure.
+        device: Device to run on.
+        config: Path to the config file.
+    """
     num_img = num_imgs_plot
 
     zea.visualize.set_mpl_style()
@@ -419,20 +432,14 @@ def main(
     config = Config.from_path(config)
     seed = jax.random.PRNGKey(config.seed)
 
-    paths = list(Path(input_folder).glob("*.png"))
-    paths = sorted(paths)
+    images, names = load_images(input_folder, frames)
 
-    if len(paths) == 0:
+    if len(names) == 0:
         log.error(f"No PNG images found in the input folder: {input_folder}")
         return
 
     output_folder = Path(output_folder)
-
-    images = []
-    for path in paths:
-        image = load_image(path)
-        images.append(image)
-    images = ops.stack(images, axis=0)
+    images = ops.convert_to_tensor(images)
 
     diffusion_model = init(config)
 
@@ -445,10 +452,9 @@ def main(
 
     output_folder.mkdir(parents=True, exist_ok=True)
 
-    for image, path in zip(pred_tissue_images, paths, strict=False):
+    for image, name in zip(pred_tissue_images, names, strict=True):
         image = ops.convert_to_numpy(image)
-        file_name = path.name
-        Image.fromarray(image).save(output_folder / file_name)
+        Image.fromarray(image).save(output_folder / name)
 
     fig = plot_dehazed_results(
         hazy_images[:num_img],
