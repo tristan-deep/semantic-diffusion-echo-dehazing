@@ -416,7 +416,7 @@ def main(
     zea.visualize.set_mpl_style()
     init_device(device)
 
-    config = Config.from_yaml(config)
+    config = Config.from_path(config)
     seed = jax.random.PRNGKey(config.seed)
 
     paths = list(Path(input_folder).glob("*.png"))
