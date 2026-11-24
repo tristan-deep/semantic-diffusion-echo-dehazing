@@ -24,6 +24,9 @@
 	<img src="https://github.com/tristan-deep/semantic-diffusion-echo-dehazing/raw/main/paper/animation.gif" alt="Cardiac Ultrasound Dehazing Animation" style="max-width: 100%; height: auto;">
 </p>
 
+> [!NOTE]
+> An improved method that exploits the temporal context of echocardiography sequences is available: [Nuclear Diffusion Models for Low-Rank Background Suppression in Videos](https://doi.org/10.1109/ICASSP55912.2026.11463877) (ICASSP 2026). See the [code demo](https://zea.readthedocs.io/en/latest/notebooks/models/nuclear_dehazing_example.html).
+
 ### Installation
 
 The algorithm is implemented using Keras with JAX backend. Furthermore it heavily relies on the [zea ultrasound library](https://github.com/tue-bmd/zea).
