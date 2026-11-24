@@ -18,11 +18,11 @@ DATASET = "hf://zeahub/DehazingEcho2025"
 DEFAULT_ZEA_FILE = f"{DATASET}/noisy/patient-1-4C.hdf5"
 # Example frames (file, 0-based frame index) from the DehazingEcho2025 dataset.
 EXAMPLE_FRAMES = [
-    ("noisy/patient-1-4C.hdf5", 1),
-    ("noisy/patient-38-4C.hdf5", 8),
-    ("noisy/patient-21-4C.hdf5", 20),
     ("noisy/patient-46-4C.hdf5", 56),
     ("noisy/patient-47-4C.hdf5", 58),
+    ("noisy/patient-38-4C.hdf5", 8),
+    ("noisy/patient-1-4C.hdf5", 1),
+    ("noisy/patient-21-4C.hdf5", 20),
 ]
 DEVICE = None
 
@@ -216,7 +216,6 @@ def load_examples():
     """Load the example frames from the dataset, or the bundled PNGs if offline."""
     try:
         images = [load_frame(f"{DATASET}/{f}", i) for f, i in EXAMPLE_FRAMES]
-        labels = [f"{f.split('/')[-1]}, frame {i}" for f, i in EXAMPLE_FRAMES]
     except Exception as e:
         log.warning(f"Could not load examples from {DATASET}, using {ASSETS_DIR}: {e}")
         paths = sorted(
@@ -225,8 +224,7 @@ def load_examples():
             if f.lower().endswith(".png")
         )
         images = [Image.fromarray(load_image(p)) for p in paths]
-        labels = [os.path.basename(p) for p in paths]
-    return images, labels
+    return images
 
 
 def load_frame_event(path, frame):
@@ -236,7 +234,7 @@ def load_frame_event(path, frame):
         raise gr.Error(f"Could not load frame {frame} from {path}: {e}") from e
 
 
-example_images, example_labels = load_examples()
+example_images = load_examples()
 examples = [[img] for img in example_images]
 
 
@@ -254,19 +252,20 @@ with gr.Blocks() as demo:
                 webcam_options=False,
                 value=example_images[0] if example_images else None,
             )
-            gr.Examples(examples=examples, inputs=[img1], example_labels=example_labels)
-            with gr.Row():
-                zea_path = gr.Textbox(
-                    label="zea file (local or hf://)",
-                    value=DEFAULT_ZEA_FILE,
-                    scale=4,
-                )
-                zea_frame = gr.Number(
-                    label="Frame index (0-based)", value=1, precision=0, scale=1
-                )
-            load_btn = gr.Button("Load frame")
+            gr.Examples(examples=examples, inputs=[img1])
         with gr.Column():
             img2 = gr.ImageSlider(label="Dehazed Image", type="pil")
+    with gr.Accordion("Load a frame from a zea file", open=False):
+        gr.Markdown(
+            "Any file from the [DehazingEcho2025 dataset]"
+            "(https://huggingface.co/datasets/zeahub/DehazingEcho2025/tree/main/noisy)"
+            " (`hf://`) or a local `.hdf5` file. Press Enter or change the frame to load."
+        )
+        with gr.Row():
+            zea_path = gr.Textbox(value=DEFAULT_ZEA_FILE, label="zea file", scale=5)
+            zea_frame = gr.Number(
+                value=0, label="Frame", precision=0, minimum=0, min_width=80
+            )
     with gr.Row():
         diffusion_steps_slider = gr.Slider(
             minimum=diffusion_steps_min,
@@ -305,7 +304,13 @@ with gr.Blocks() as demo:
         )
     run_btn = gr.Button("Run", interactive=False)
 
-    load_btn.click(load_frame_event, inputs=[zea_path, zea_frame], outputs=[img1])
+    for event in (zea_path.submit, zea_frame.submit, zea_frame.change):
+        event(
+            load_frame_event,
+            inputs=[zea_path, zea_frame],
+            outputs=[img1],
+            queue=False,
+        )
 
     run_btn.click(
         process_image,
