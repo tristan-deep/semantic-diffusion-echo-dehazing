@@ -15,7 +15,7 @@ from keras import ops
 from PIL import Image
 from skimage import filters
 from zea import Config, init_device, log
-from zea.func import translate
+from zea.func import split_seed, translate
 from zea.internal.operators import Operator
 from zea.models.diffusion import (
     DPS,
@@ -28,6 +28,7 @@ from utils import (
     apply_bottom_preservation,
     extract_skeleton,
     load_images,
+    normalize_per_image,
     per_image_L2,
     postprocess,
     preprocess,
@@ -107,9 +108,9 @@ class SemanticDPS(DPS):
             mask = ops.convert_to_numpy(mask)
             mask = np.expand_dims(mask, axis=-1)
             mask = np.where(mask > threshold, 1.0, 0.0)
-            mask = filters.gaussian(mask, sigma=sigma)
-            mask = (mask - ops.min(mask)) / (ops.max(mask) - ops.min(mask) + 1e-8)
-            return mask
+            # blur and normalize each image separately (not across the batch)
+            mask = filters.gaussian(mask, sigma=(0, sigma, sigma, 0))
+            return normalize_per_image(mask)
 
         mask_vent = _preprocess_mask(mask_vent)
         mask_sept = _preprocess_mask(mask_sept)
@@ -271,6 +272,24 @@ def load_segmentation_model(path):
     return segmentation_model
 
 
+def posterior_sample(diffusion_model, measurements, seed, n_steps, **kwargs):
+    """Posterior sampling where every image starts from the same initial noise.
+
+    Equivalent to ``diffusion_model.posterior_sample`` with a batch of one, so
+    the result for an image does not depend on the batch it is processed in.
+    """
+    seed_noise, seed_diffusion = split_seed(seed, 2)
+    noise = keras.random.normal((1, *diffusion_model.input_shape), seed=seed_noise)
+    noise = ops.repeat(noise, ops.shape(measurements)[0], axis=0)
+    return diffusion_model.reverse_conditional_diffusion(
+        measurements=measurements,
+        initial_noise=noise,
+        diffusion_steps=n_steps,
+        seed=seed_diffusion,
+        **kwargs,
+    )
+
+
 _SAMPLERS = {}
 
 
@@ -285,11 +304,11 @@ def get_jit_sampler(diffusion_model: DiffusionModel, diffusion_steps: int):
 
         @jax.jit
         def sample(batch, seed, per_pixel_omega, haze_mask, eta, smooth_l1_beta):
-            return diffusion_model.posterior_sample(
+            return posterior_sample(
+                diffusion_model,
                 batch,
-                n_samples=batch.shape[0],
-                n_steps=diffusion_steps,
                 seed=seed,
+                n_steps=diffusion_steps,
                 verbose=False,
                 track_progress_type=None,
                 per_pixel_omega=per_pixel_omega,
@@ -355,11 +374,11 @@ def run(
             progbar.update(batch_idx)
             continue
 
-        batch_images = diffusion_model.posterior_sample(
+        batch_images = posterior_sample(
+            diffusion_model,
             batch,
-            n_samples=len(batch),
-            n_steps=diffusion_steps,
             seed=seed,
+            n_steps=diffusion_steps,
             verbose=verbose,
             track_progress_type=track_progress_type,
             per_pixel_omega=masks["per_pixel_omega"],

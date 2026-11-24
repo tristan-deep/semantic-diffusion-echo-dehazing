@@ -16,6 +16,14 @@ def L1(x):
     return ops.sum(ops.abs(x))
 
 
+def normalize_per_image(x):
+    """Min-max normalize each image in a numpy batch to [0, 1]."""
+    axes = tuple(range(1, x.ndim))
+    min_val = np.min(x, axis=axes, keepdims=True)
+    max_val = np.max(x, axis=axes, keepdims=True)
+    return (x - min_val) / (max_val - min_val + 1e-8)
+
+
 def per_image_L2(x):
     """L2 norm of each image in a batch, shape ``(batch,)``."""
     return ops.sqrt(ops.sum(x**2, axis=tuple(range(1, len(x.shape)))))
@@ -133,9 +141,7 @@ def extract_skeleton(images, input_range, sigma_pre=4, sigma_post=4, threshold=0
     skeleton_masks = np.array(skeleton_masks)
     skeleton_masks = np.expand_dims(skeleton_masks, axis=-1)
 
-    # normalize to [0, 1]
-    min_val, max_val = np.min(skeleton_masks), np.max(skeleton_masks)
-    skeleton_masks = (skeleton_masks - min_val) / (max_val - min_val + 1e-8)
+    skeleton_masks = normalize_per_image(skeleton_masks)
 
     return ops.convert_to_tensor(skeleton_masks, dtype=images.dtype)
 
