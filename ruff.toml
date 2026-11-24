@@ -1,0 +1,5 @@
+line-length = 88
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["E501"]  # line length is handled by the formatter

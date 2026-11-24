@@ -47,8 +47,8 @@ from tqdm import tqdm
 
 try:
     from pytorch_fid.inception import InceptionV3
-except ImportError:
-    raise ImportError("Please install pytorch-fid: pip install pytorch-fid")
+except ImportError as err:
+    raise ImportError("Please install pytorch-fid: pip install pytorch-fid") from err
 
 
 parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
@@ -133,10 +133,8 @@ def get_activations(
 
     if batch_size > len(files):
         print(
-            (
-                "Warning: batch size is bigger than the data size. "
-                "Setting batch size to data size"
-            )
+            "Warning: batch size is bigger than the data size. "
+            "Setting batch size to data size"
         )
         batch_size = len(files)
     # print(files)
@@ -215,8 +213,8 @@ def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     if not np.isfinite(covmean).all():
         msg = (
             "fid calculation produces singular product; "
-            "adding %s to diagonal of cov estimates"
-        ) % eps
+            f"adding {eps} to diagonal of cov estimates"
+        )
         print(msg)
         offset = np.eye(sigma1.shape[0]) * eps
         covmean = linalg.sqrtm((sigma1 + offset).dot(sigma2 + offset))
@@ -225,7 +223,7 @@ def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     if np.iscomplexobj(covmean):
         if not np.allclose(np.diagonal(covmean).imag, 0, atol=1e-3):
             m = np.max(np.abs(covmean.imag))
-            raise ValueError("Imaginary component {}".format(m))
+            raise ValueError(f"Imaginary component {m}")
         covmean = covmean.real
 
     tr_covmean = np.trace(covmean)
@@ -301,7 +299,7 @@ def calculate_fid_given_paths(paths, batch_size, device, dims, num_workers=1):
     if isinstance(paths[1], (str, pathlib.Path)) and pathlib.Path(paths[1]).is_dir():
         # Get all PNGs in the directory
         gt_images = list(pathlib.Path(paths[1]).glob("*.png"))
-        stats_path, hash_path = _fid_cache_paths()
+        stats_path, _hash_path = _fid_cache_paths()
         if stats_path.exists():
             print(f"Using cached FID stats from {stats_path}")
             print("WARNING: Cache may be stale if ground truth images have changed.")
@@ -339,10 +337,10 @@ def calculate_fid_given_paths(paths, batch_size, device, dims, num_workers=1):
 def save_fid_stats(paths, batch_size, device, dims, num_workers=1):
     """Calculates the FID of two paths"""
     if not os.path.exists(paths[0]):
-        raise RuntimeError("Invalid path: %s" % paths[0])
+        raise RuntimeError(f"Invalid path: {paths[0]}")
 
     if os.path.exists(paths[1]):
-        raise RuntimeError("Existing output file: %s" % paths[1])
+        raise RuntimeError(f"Existing output file: {paths[1]}")
 
     block_idx = InceptionV3.BLOCK_INDEX_BY_DIM[dims]
 
@@ -402,7 +400,7 @@ def calculate_fid_with_cached_ground_truth(
     cache_valid = False
     if stats_path.exists() and hash_path.exists():
         try:
-            with open(hash_path, "r") as f:
+            with open(hash_path) as f:
                 cached_hash = f.read().strip()
             if cached_hash == current_hash:
                 cache_valid = True

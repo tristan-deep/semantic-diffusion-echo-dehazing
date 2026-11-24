@@ -106,10 +106,10 @@ def calculate_ks_statistics(
 def calculate_dice_asd(image_path, label_path, checkpoint_path, image_size=224):
     try:
         from test import inference  # Our Segmentation Method
-    except ImportError:
+    except ImportError as err:
         raise ImportError(
             "Segmentation method not available, skipping Dice/ASD calculation"
-        )
+        ) from err
 
     pred_img = inference(image_path, checkpoint_path, image_size)
     pred = np.array(pred_img) > 127
@@ -204,7 +204,7 @@ def calculate_final_score(aggregates):
         return final_score
 
     except Exception as e:
-        print(f"Error calculating final score: {str(e)}")
+        print(f"Error calculating final score: {e!s}")
         return 0
 
 
