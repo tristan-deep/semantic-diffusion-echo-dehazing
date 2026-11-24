@@ -15,7 +15,7 @@ from keras import ops
 from PIL import Image
 from skimage import filters
 from zea import Config, init_device, log
-from zea.func import L2, translate
+from zea.func import translate
 from zea.internal.operators import Operator
 from zea.models.diffusion import (
     DPS,
@@ -28,6 +28,7 @@ from utils import (
     apply_bottom_preservation,
     extract_skeleton,
     load_images,
+    per_image_L2,
     postprocess,
     preprocess,
     smooth_L1,
@@ -220,10 +221,11 @@ class SemanticDPS(DPS):
             training=False,
         )
 
-        measurement_error = L2(
-            per_pixel_omega
-            * (measurements - self.operator.forward(pred_images, **kwargs))
+        residual = per_pixel_omega * (
+            measurements - self.operator.forward(pred_images, **kwargs)
         )
+        # L2 norm per image, so the guidance does not depend on the batch size
+        measurement_error = ops.sum(per_image_L2(residual))
 
         hazy_pixels = pred_images * haze_mask
 

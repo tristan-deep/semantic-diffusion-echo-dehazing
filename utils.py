@@ -16,6 +16,11 @@ def L1(x):
     return ops.sum(ops.abs(x))
 
 
+def per_image_L2(x):
+    """L2 norm of each image in a batch, shape ``(batch,)``."""
+    return ops.sqrt(ops.sum(x**2, axis=tuple(range(1, len(x.shape)))))
+
+
 def smooth_L1(x, beta=0.4):
     """Smooth L1 loss function.
 
