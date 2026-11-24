@@ -1,7 +1,7 @@
 import json
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import keras
 import matplotlib.pyplot as plt
@@ -131,7 +131,7 @@ def plot_batch_with_named_masks(
             continue
         mask_np = np.array(masks_dict[name])
         axes = fig.axes[col_idx : batch_size * len(mask_names) : len(mask_names)]
-        for ax, mask_img in zip(axes, mask_np):
+        for ax, mask_img in zip(axes, mask_np, strict=False):
             add_shape_from_mask(
                 ax, mask_img.squeeze(), color=mask_colors[name], alpha=0.3
             )
@@ -246,7 +246,9 @@ def plot_metrics(metrics, limits, out_path):
         "marker": "s",
         "markersize": 5,
     }
-    for idx, (ax, (name, values)) in enumerate(zip(axes, metrics.items())):
+    for idx, (ax, (name, values)) in enumerate(
+        zip(axes, metrics.items(), strict=False)
+    ):
         ax.hist(
             values,
             bins=30,
@@ -286,7 +288,7 @@ def plot_metrics(metrics, limits, out_path):
 
 
 def plot_optimization_history_from_json(
-    trials_data: List[Dict[str, Any]], output_path: Path, method: str
+    trials_data: list[dict[str, Any]], output_path: Path, method: str
 ):
     """Plot optimization history directly from JSON data."""
 
@@ -363,7 +365,7 @@ def plot_optimization_history_from_json(
 
 def create_animation_frame(hazy_images, tissue_frame, haze_frame):
     """Create a single animation frame from the tracked progress."""
-    batch, height, width = ops.shape(hazy_images)
+    _batch, height, width = ops.shape(hazy_images)
     frame_stack = ops.stack(
         [
             hazy_images,
@@ -423,7 +425,7 @@ def main(json_file: str, output_dir: str = "plots", method: str = "semantic_dps"
         raise FileNotFoundError(f"JSON file not found: {json_file}")
 
     # Load trial data
-    with open(json_path, "r") as f:
+    with open(json_path) as f:
         trials_data = json.load(f)
 
     print(f"Loaded {len(trials_data)} trials from {json_file}")

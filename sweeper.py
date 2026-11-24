@@ -9,7 +9,7 @@ import json
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import jax
 import numpy as np
@@ -47,7 +47,7 @@ def save_images_to_temp_dir(images, image_paths, prefix=""):
     temp_dir = tempfile.mkdtemp(prefix=prefix)
     temp_dir_path = Path(temp_dir)
 
-    for i, (img, path) in enumerate(zip(images, image_paths)):
+    for img, path in zip(images, image_paths, strict=False):
         # Get the filename from the original path
         filename = Path(path).name
 
@@ -87,7 +87,7 @@ class SweeperConfig:
 
     # Optuna settings
     study_name: str = "dehaze_optimization"
-    storage: Optional[str] = None  # e.g., "sqlite:///dehaze_study.db" for persistence
+    storage: str | None = None  # e.g., "sqlite:///dehaze_study.db" for persistence
     n_trials: int = 100
 
     # Optimization settings
@@ -126,11 +126,11 @@ class OptunaObjective:
 
     def _load_base_config(self):
         """Load base configuration from YAML file."""
-        with open(self.config.base_config_path, "r") as f:
+        with open(self.config.base_config_path) as f:
             config_dict = yaml.safe_load(f)
         return zea.Config(**config_dict)
 
-    def _create_trial_params(self, trial: optuna.Trial) -> Dict[str, Any]:
+    def _create_trial_params(self, trial: optuna.Trial) -> dict[str, Any]:
         """Create trial parameters by suggesting hyperparameters."""
         params = {
             "guidance_kwargs": {
@@ -172,7 +172,7 @@ class OptunaObjective:
 
         # Run the semantic DPS method
         try:
-            hazy_images, pred_tissue_images, pred_haze_images, masks = run(
+            _hazy_images, pred_tissue_images, _pred_haze_images, _masks = run(
                 hazy_images=self.hazy_images,
                 diffusion_model=self.diffusion_model,
                 seed=seed,

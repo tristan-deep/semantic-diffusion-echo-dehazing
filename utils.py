@@ -57,9 +57,7 @@ def apply_bottom_preservation(
     Returns:
         Blended images with preserved bottom portion
     """
-    output_shape = ops.shape(output_images)
-
-    batch_size, height, width, channels = output_shape
+    height = ops.shape(output_images)[1]
 
     preserve_height = int(height * preserve_bottom_percent / 100.0)
     transition_height = int(height * transition_width / 100.0)
@@ -154,10 +152,7 @@ def load_image(filename, grayscale=True):
         raise FileNotFoundError(f"File {filename} does not exist")
 
     img = Image.open(filename)
-    if grayscale:
-        img = img.convert("L")
-    else:
-        img = img.convert("RGB")
+    img = img.convert("L") if grayscale else img.convert("RGB")
 
     arr = np.array(img)
     return arr

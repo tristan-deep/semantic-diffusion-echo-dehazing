@@ -310,7 +310,7 @@ def run(
     skeleton_params: dict,
     batch_size: int = 4,
     diffusion_steps: int = 100,
-    threshold_output_quantile: float = None,
+    threshold_output_quantile: float | None = None,
     preserve_bottom_percent: float = 30.0,
     bottom_transition_width: float = 10.0,
     verbose: bool = True,
@@ -376,7 +376,7 @@ def run(
     pred_tissue_images = ops.concatenate(pred_tissue_images, axis=0)
     masks_out = {
         key: ops.concatenate([m[key] for m in masks_out], axis=0)
-        for key in masks_out[0].keys()
+        for key in masks_out[0]
     }
     pred_haze_images = hazy_images - pred_tissue_images - 1
 
@@ -445,7 +445,7 @@ def main(
 
     output_folder.mkdir(parents=True, exist_ok=True)
 
-    for image, path in zip(pred_tissue_images, paths):
+    for image, path in zip(pred_tissue_images, paths, strict=False):
         image = ops.convert_to_numpy(image)
         file_name = path.name
         Image.fromarray(image).save(output_folder / file_name)
